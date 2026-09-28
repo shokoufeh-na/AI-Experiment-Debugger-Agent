@@ -441,10 +441,8 @@ This project is released under an open-source license. See the `LICENSE` file fo
 
 ## 👩‍💻 Author
 
-**Shokoufeh**
+**S. Namazian **
 
 Graduate Computer Science Student  
 AI / Machine Learning / LLM Research
-
-GitHub: `YOUR_GITHUB_URL`  
-LinkedIn: `YOUR_LINKEDIN_URL`
+ 
