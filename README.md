@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 # AI-Experiment-Debugger-Agent
 
 An AI-powered agent for analyzing machine learning experiments, diagnosing training problems, and recommending better experiment configurations using **NVIDIA Nemotron models** served through **Nebius Token Factory**.
@@ -446,3 +447,5 @@ This project is released under an open-source license. See the `LICENSE` file fo
 Graduate Computer Science Student  
 AI / Machine Learning / LLM Research
  
+=======
+>>>>>>> Stashed changes
