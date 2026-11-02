@@ -2,6 +2,8 @@ from openai import OpenAI
 import os
 from dotenv import load_dotenv
 
+import json
+
 # Load variables from .env
 load_dotenv()
 
@@ -32,6 +34,52 @@ def analyze_experiment(experiment_data):
     )
 
     return response.choices[0].message.content
+
+
+ 
+def analyze_experiment_json(experiment_data):
+    response = client.chat.completions.create(
+        model="nvidia/Nemotron-3_5-Lightning",
+        messages=[
+            {
+                "role": "system",
+                "content": """
+You are an ML Experiment Debugger Agent.
+
+Analyze the supplied experiment data.
+
+Return ONLY valid JSON with these fields:
+{
+  "diagnosis": "string",
+  "severity": "low, medium, or high",
+  "evidence": ["string"],
+  "likely_causes": ["string"],
+  "recommended_fixes": ["string"],
+  "next_experiment": "string"
+}
+
+Rules:
+- Use actual experiment metrics as evidence.
+- Distinguish observed problems from possible causes.
+- Do not invent missing metrics or configurations.
+- Do not guarantee performance improvements.
+- Return JSON only, without Markdown.
+"""
+            },
+            {
+                "role": "user",
+                "content": experiment_data
+            }
+        ],
+        temperature=0
+    )
+
+    content = response.choices[0].message.content
+
+    if not content:
+        raise ValueError("Nemotron returned an empty response.")
+
+    return json.loads(content)
 
 
 # Test the agent
