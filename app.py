@@ -1,7 +1,93 @@
 
 import streamlit as st
+import json
+from experiment_comparison import compare_experiments
 from agent import analyze_experiment
 from agent import analyze_experiment, analyze_experiment_json
+
+import pandas as pd
+from log_parser import parse_training_log
+from agent import analyze_experiment_json
+
+
+
+
+st.divider()
+st.header("Compare Two Experiments")
+
+file_a = st.file_uploader(
+    "Upload Experiment A (Baseline)",
+    type=["log", "txt"],
+    key="experiment_a"
+)
+
+file_b = st.file_uploader(
+    "Upload Experiment B (Modified)",
+    type=["log", "txt"],
+    key="experiment_b"
+)
+
+if file_a is not None and file_b is not None:
+    log_a = file_a.getvalue().decode(
+        "utf-8", errors="replace"
+    )
+    log_b = file_b.getvalue().decode(
+        "utf-8", errors="replace"
+    )
+
+    df_a = parse_training_log(log_a)
+    df_b = parse_training_log(log_b)
+
+    if df_a.empty or df_b.empty:
+        st.error("Could not extract metrics from both logs.")
+    else:
+        comparison = compare_experiments(df_a, df_b)
+
+        st.subheader("Metric Comparison")
+        st.dataframe(
+            pd.DataFrame({
+                "Baseline": comparison["experiment_a"],
+                "Modified": comparison["experiment_b"]
+            })
+        )
+
+        change = comparison["improvement"]
+
+        st.metric(
+            "Validation Accuracy Change",
+            f'{change["val_accuracy_change"]:+.1f} pp'
+        )
+
+        st.metric(
+            "Validation Loss Change",
+            f'{change["val_loss_change"]:+.3f}'
+        )
+
+        if st.button("Analyze Comparison with Nemotron"):
+            prompt = (
+                "Compare these two ML experiments. "
+                "Explain what improved, what worsened, "
+                "and recommend the next experiment. "
+                "Do not invent configurations or causes.\n\n"
+                + json.dumps(comparison, indent=2)
+            )
+
+            with st.spinner("Comparing experiments..."):
+                try:
+                    result = analyze_experiment_json(prompt)
+                    st.subheader("AI Comparison")
+                    st.json(result)
+                except Exception as e:
+                    st.error(f"Comparison failed: {e}")
+
+
+
+
+
+
+
+
+
 st.set_page_config(
     page_title="AI Experiment Debugger",
     page_icon="🔬",
@@ -105,3 +191,68 @@ if st.button("Analyze Experiment", type="primary"):
             st.markdown(result)
         except Exception as e:
             st.error(f"Analysis failed: {e}")
+
+
+
+st.divider()
+st.header("Compare Two Experiments")
+
+file_a = st.file_uploader(
+    "Experiment A (Baseline)",
+    type=["log", "txt"],
+    key="compare_a"
+)
+
+file_b = st.file_uploader(
+    "Experiment B (Modified)",
+    type=["log", "txt"],
+    key="compare_b"
+)
+
+if file_a is not None and file_b is not None:
+    log_a = file_a.getvalue().decode("utf-8", errors="replace")
+    log_b = file_b.getvalue().decode("utf-8", errors="replace")
+
+    df_a = parse_training_log(log_a)
+    df_b = parse_training_log(log_b)
+
+    if df_a.empty or df_b.empty:
+        st.error("Could not parse both training logs.")
+    else:
+        comparison = compare_experiments(df_a, df_b)
+
+        st.subheader("Metric Comparison")
+
+        st.dataframe(pd.DataFrame({
+            "Baseline": comparison["experiment_a"],
+            "Modified": comparison["experiment_b"]
+        }))
+
+        change = comparison["improvement"]
+
+        st.metric(
+            "Validation Accuracy Change",
+            f'{change["val_accuracy_change"]:+.1f} pp'
+        )
+
+        st.metric(
+            "Validation Loss Change",
+            f'{change["val_loss_change"]:+.2f}'
+        )
+
+        if st.button("Analyze Comparison with Nemotron"):
+            prompt = (
+                "Compare the following ML experiments. "
+                "Explain improvements, regressions, and uncertainties. "
+                "Recommend the next experiment. "
+                "Do not invent missing configurations.\n\n"
+                + json.dumps(comparison, indent=2)
+            )
+
+            with st.spinner("Analyzing comparison..."):
+                try:
+                    result = analyze_experiment_json(prompt)
+                    st.subheader("AI Comparison")
+                    st.json(result)
+                except Exception as e:
+                    st.error(f"Analysis failed: {e}")
