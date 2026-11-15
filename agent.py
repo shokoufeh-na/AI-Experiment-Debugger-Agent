@@ -82,6 +82,57 @@ Rules:
     return json.loads(content)
 
 
+
+ 
+def compare_experiments_with_llm(comparison):
+    response = client.chat.completions.create(
+        model="nvidia/Nemotron-3_5-Lightning",
+        messages=[
+            {
+                "role": "system",
+                "content": """
+You are an ML Experiment Comparison Agent.
+
+Compare two ML experiments using the provided metrics.
+
+Return ONLY valid JSON with this structure:
+
+{
+    "summary": "string",
+    "improvements": ["string"],
+    "regressions": ["string"],
+    "uncertainties": ["string"],
+    "next_experiment": {
+        "description": "string",
+        "evaluation_metric": "string"
+    }
+}
+
+Rules:
+- Use the numerical values provided by Python.
+- Do not invent missing hyperparameters.
+- Do not recalculate metrics.
+- Distinguish observed improvements from possible causes.
+- Do not guarantee future improvements.
+- Return JSON only, without Markdown.
+"""
+            },
+            {
+                "role": "user",
+                "content": json.dumps(comparison, indent=2)
+            }
+        ],
+        temperature=0
+    )
+
+    content = response.choices[0].message.content
+
+    if not content:
+        raise ValueError("Nemotron returned an empty response.")
+
+    return json.loads(content)
+
+
 # Test the agent
 if __name__ == "__main__":
     experiment_data = """
